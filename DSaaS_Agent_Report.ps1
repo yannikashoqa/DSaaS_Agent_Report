@@ -118,3 +118,15 @@ $Computers.ec2VirtualMachineSummary.operatingSystem
 $Computers.ec2VirtualMachineSummary.instanceID
 $PolicyName.name
 $Computers.antiMalware.state
+
+
+$Report = New-Object psobject
+$Report | Add-Member  -membertype NoteProperty -name "overallStatus" -value $Computers.computerStatus.agentStatusMessages.GetValue(0)
+$Report | Add-Member  -membertype NoteProperty -name "overallVersion" -value $Computers.agentVersion
+$Report | Add-Member  -membertype NoteProperty -name "ec2_virtual_machine_summary_operating_system" -value $Computers.ec2VirtualMachineSummary.operatingSystem
+$Report | Add-Member  -membertype NoteProperty -name "ec2_virtual_machine_summary_instance_id" -value $Computers.ec2VirtualMachineSummary.instanceID
+$Report | Add-Member  -membertype NoteProperty -name "securityProfileName" -value $PolicyName.name
+$Report | Add-Member  -membertype NoteProperty -name "overallAntiMalwareStatus" -value $Computers.antiMalware.state
+$Report | Add-Member  -membertype NoteProperty -name "overallLastRecommendationScan" -value $LastRecommendationScan
+
+$Report | Export-Csv "$PSScriptRoot\Report.csv"
