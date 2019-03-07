@@ -14,6 +14,17 @@ $APIKEY = $Credentials.APIKEY
 $ErrorActionPreference = 'Stop'
 
 $DSM_URI="https://" + $Manager + ":" + $Port
+
+$Computers_apipath = "/api/computers"
+$Computers_Uri= $DSM_URI + $Computers_apipath
+
+$Policies_apipath = "/api/policies"
+$Policies_Uri= $DSM_URI + $Policies_apipath
+
+$headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+$headers.Add("api-secret-key", $APIKEY)
+$headers.Add("api-version", 'v1')
+
 Function Connect-DSM {
 
 	#$DSM_Cred	= Get-Credential -Message "Enter DSM Credentials"
@@ -52,81 +63,68 @@ Function Connect-DSM {
 	}
 }
 
-Function Get-LastRecommendationScan {
+Function Get-LastRecommendationScanByID {
+	Param(	[Parameter(Mandatory=$true)][String] $HostID)
 
 	$WSDL = "/webservice/Manager?WSDL"
 	$DSM_URI = $DSM_URI + $WSDL
-
-	$HostName = "lt-ubuntu18"
-
+	$ID = $HostID
 	[xml] $SoapRequest = '
 	<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:Manager">
-	   <soapenv:Header/>
-	   <soapenv:Body>
-		  <urn:hostDetailRetrieveByName>
-			 <urn:hostname></urn:hostname>
-			 <urn:hostDetailLevel>LOW</urn:hostDetailLevel>
-			 <urn:sID></urn:sID>
-		  </urn:hostDetailRetrieveByName>
-	   </soapenv:Body>
-	</soapenv:Envelope>
+		<soapenv:Header/>
+		<soapenv:Body>
+		<urn:hostDetailRetrieve>
+			<urn:hostFilter>
+				<urn:hostID></urn:hostID>
+				<urn:type>SPECIFIC_HOST</urn:type>
+			</urn:hostFilter>
+			<urn:hostDetailLevel>LOW</urn:hostDetailLevel>
+			<urn:sID></urn:sID>
+		</urn:hostDetailRetrieve>
+		</soapenv:Body>
+ 	</soapenv:Envelope>
 	'
 
-	$SoapRequest.Envelope.Body.hostDetailRetrieveByName.hostname = $HostName
-	$SoapRequest.Envelope.Body.hostDetailRetrieveByName.sID = $sID
+	$SoapRequest.Envelope.Body.hostDetailRetrieve.hostFilter.hostID = $ID
+	$SoapRequest.Envelope.Body.hostDetailRetrieve.sID = $sID
 
 	$headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
 	$headers.Add("Content-Type", "text/xml")
-	$headers.Add("soapaction", "hostDetailRetrieveByName")
+	$headers.Add("soapaction", "hostDetailRetrieve")
 
 	[xml] $obj_Manager = Invoke-WebRequest -Uri $DSM_URI -Headers $headers -Method Post -Body $SoapRequest -SkipHeaderValidation
 
-	$HostDetails = $obj_Manager.Envelope.Body.hostDetailRetrieveByNameResponse.hostDetailRetrieveByNameReturn
-	$Results =  $HostDetails.overallLastRecommendationScan
-	Return $Results
+	$Results = $obj_Manager.Envelope.Body.hostDetailRetrieveResponse.hostDetailRetrieveReturn
+	$LastRecommendationScan = $Results.overallLastRecommendationScan
+
+	If ($LastRecommendationScan.IsEmpty){
+	   Return "No Recommendation scan exist"
+	}Else{
+	   Return $LastRecommendationScan
+	}
 }
 
 $sID = Connect-DSM
-write-host $sID
-
-$LastRecommendationScan = Get-LastRecommendationScan
-Write-Host $LastRecommendationScan
-
-$headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-$headers.Add("api-secret-key", $APIKEY)
-$headers.Add("api-version", 'v1')
-
-$Policies_apipath = "/api/policies"
-$Computers_apipath = "/api/computers/5002"
-
-$Computers_Uri= $DSM_URI + $Computers_apipath
-$Policies_Uri= $DSM_URI + $Policies_apipath
 
 $Computers = Invoke-RestMethod -Uri $Computers_Uri  -Headers $Headers -Method Get
 $Policies  = Invoke-RestMethod -Uri $Policies_Uri -Headers $Headers -Method Get
 
+foreach ($Item in $Computers.computers){
+	$Host_ID = $Item.ID
+	$PolicyID = $Item.policyID
+	$PolicyName = $Policies.policies | Where-Object {$_.ID -eq $PolicyID}
 
-#$Computers
-$PolicyID = $Computers.policyID
-$PolicyID
-$PolicyName = $Policies.policies | Where-Object {$_.ID -eq $PolicyID}
+	$HostName = $Item.hostName
+	$DisplayName = $Item.displayName
+	$AgentStatus = $Item.computerStatus.agentStatusMessages
+	$AgentVersion = $Item.agentVersion
+	$AgentOS = $Item.ec2VirtualMachineSummary.operatingSystem
+	$InstanceID = $Item.ec2VirtualMachineSummary.instanceID
+	$PolicyName = $PolicyName.name
+	$AntiMalwareState = $Item.antiMalware.state
+	$LastRecommendationScan = Get-LastRecommendationScanByID -HostID $Host_ID
 
+	Write-Host "$Host_ID	$HostName	$DisplayName	$AgentStatus	$AgentVersion	$AgentOS	$InstanceID		$PolicyName		$AntiMalwareState	$LastRecommendationScan"
 
-$Computers.computerStatus.agentStatusMessages
-$Computers.agentVersion
-$Computers.ec2VirtualMachineSummary.operatingSystem
-$Computers.ec2VirtualMachineSummary.instanceID
-$PolicyName.name
-$Computers.antiMalware.state
+}
 
-
-$Report = New-Object psobject
-$Report | Add-Member  -membertype NoteProperty -name "overallStatus" -value $Computers.computerStatus.agentStatusMessages.GetValue(0)
-$Report | Add-Member  -membertype NoteProperty -name "overallVersion" -value $Computers.agentVersion
-$Report | Add-Member  -membertype NoteProperty -name "ec2_virtual_machine_summary_operating_system" -value $Computers.ec2VirtualMachineSummary.operatingSystem
-$Report | Add-Member  -membertype NoteProperty -name "ec2_virtual_machine_summary_instance_id" -value $Computers.ec2VirtualMachineSummary.instanceID
-$Report | Add-Member  -membertype NoteProperty -name "securityProfileName" -value $PolicyName.name
-$Report | Add-Member  -membertype NoteProperty -name "overallAntiMalwareStatus" -value $Computers.antiMalware.state
-$Report | Add-Member  -membertype NoteProperty -name "overallLastRecommendationScan" -value $LastRecommendationScan
-
-$Report | Export-Csv "$PSScriptRoot\Report.csv"
