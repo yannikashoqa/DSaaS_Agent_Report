@@ -4,9 +4,9 @@ AUTHOR		: Yanni Kashoqa
 
 TITLE		: Deep Security Agent Information
 
-VERSION		: 0.3
+VERSION		: 0.4
 
-DESCRIPTION	: This Powershell script will perform report the Deep Security Agent status information from either DSaaS or a local DSM
+DESCRIPTION	: This Powershell script will perform report the Deep Security Agent status information from DSaaS
 
 FEATURES
 The ability to perform the following:-
@@ -14,10 +14,11 @@ The ability to perform the following:-
 
 REQUIRMENTS
 - Supports Deep Security as a Service
-- PowerShell 6.x
+- PowerShell 6.x for the REST version (DSaaS_Agent_Report.ps1)
+- Powershell 5.1 for the SOAP version (DSaaS_Agent_Report_SOAP.ps1)
 - An API key that is created on DSM/DSaaS console
 - Create a DS-Config.json in the same folder with the following content:
-
+- For REST:
 {
     "MANAGER": "app.deepsecurity.trendmicro.com",
     "PORT": "443",
@@ -25,11 +26,13 @@ REQUIRMENTS
     "REPORTFILE" : "DSaaS_Agent_Report.csv"
 }
 
-REPORTED VALUES
-- Host ID
-- overallStatus
-- overallVersion
-- operating_system
-- instance_id
-- securityProfileName
-- AntiMalwareStatus
+- For SOAP:
+{
+    "MANAGER": "app.deepsecurity.trendmicro.com",
+    "PORT": "443",
+    "TENANT": "",
+    "USER_NAME": "",
+    "PASSWORD": "",
+    "REPORTFILE" : "DSaaS_Agent_Report.csv"
+}
+
