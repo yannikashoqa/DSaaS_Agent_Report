@@ -4,8 +4,6 @@ AUTHOR		: Yanni Kashoqa
 
 TITLE		: Deep Security Agent Information
 
-VERSION		: 0.4
-
 DESCRIPTION	: This Powershell script will perform report the Deep Security Agent status information from DSaaS
 
 FEATURES
@@ -23,7 +21,7 @@ REQUIRMENTS
     "MANAGER": "app.deepsecurity.trendmicro.com",
     "PORT": "443",
     "APIKEY" : "",
-    "REPORTFILE" : "DSaaS_Agent_Report.csv"
+    "REPORTNAME" : "DSaaS_Agent_Report"
 }
 
 - For SOAP:
@@ -33,6 +31,6 @@ REQUIRMENTS
     "TENANT": "",
     "USER_NAME": "",
     "PASSWORD": "",
-    "REPORTFILE" : "DSaaS_Agent_Report.csv"
+    "REPORTNAME" : "DSaaS_Agent_Report"
 }
 
