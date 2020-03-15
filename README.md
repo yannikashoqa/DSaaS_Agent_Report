@@ -17,14 +17,17 @@ REQUIRMENTS
 - An API key that is created on DSM/DSaaS console
 - Create a DS-Config.json in the same folder with the following content:
 - For REST:
+~~~~JSON
 {
     "MANAGER": "app.deepsecurity.trendmicro.com",
     "PORT": "443",
     "APIKEY" : "",
     "REPORTNAME" : "DSaaS_Agent_Report"
 }
+~~~~
 
 - For SOAP:
+~~~~JSON
 {
     "MANAGER": "app.deepsecurity.trendmicro.com",
     "PORT": "443",
@@ -33,4 +36,4 @@ REQUIRMENTS
     "PASSWORD": "",
     "REPORTNAME" : "DSaaS_Agent_Report"
 }
-
+~~~~
