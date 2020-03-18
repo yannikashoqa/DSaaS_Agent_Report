@@ -22,7 +22,8 @@ REQUIRMENTS
     "MANAGER": "app.deepsecurity.trendmicro.com",
     "PORT": "443",
     "APIKEY" : "",
-    "REPORTNAME" : "DSaaS_Agent_Report"
+    "REPORTNAME" : "DSaaS_Agent_Report",
+    "POLICYID" : ""
 }
 ~~~~
 
